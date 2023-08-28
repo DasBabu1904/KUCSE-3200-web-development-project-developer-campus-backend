@@ -3,7 +3,7 @@ const cors = require('cors');
 const app = express();
 const { MongoClient, ServerApiVersion } = require('mongodb');
 // const bodyParser = require('body-parser');
-const port = process.env.PORT || 5000;
+const port =  5000;
 
 //middle ware
 app.use(cors());
@@ -11,14 +11,14 @@ app.use(express.json());
 // app.use(bodyParser.json());
 
 /**
+sourav200217
+pYjFYAC6fBzXZYej
 
-KU-cse-3200-dev-campus
-Sra5QGoawM29VivM
  * 
  */
 
 
-const uri = "mongodb+srv://KU-cse-3200-dev-campus:Sra5QGoawM29VivM@cluster0.0omak70.mongodb.net/?retryWrites=true&w=majority";
+const uri = "mongodb+srv://sourav200217:suvro12345678@cluster0.0omak70.mongodb.net/?retryWrites=true&w=majority";
 
 
 const client = new MongoClient(uri, {
@@ -32,16 +32,26 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     await client.connect();
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    r=await client.db("admin").command({ ping: 1 });
+    console.log("Pinged your deployment. You successfully connected to MongoDB!\n ",r);
+    const customerProfile = await client.db("dev-campus").collection("customer-profile");
+    // console.log(customerProfile)
+    app.post('/register', async (req, res) => {
+      console.log("register is called")
+      const user = req.body;
+      console.log("requested to insert= \n", user);
+      const result = await customerProfile.insertOne(user);
+      res.send(result)
+    })
+    
+   
   } finally {
-    await client.close();
+    // await client.close();
   }
 }
 run().catch(console.dir);
 
-
-app.get('/', (req, res) => {
+app.get('/home', (req, res) => {
   res.send('Hello World!')
 })
 
