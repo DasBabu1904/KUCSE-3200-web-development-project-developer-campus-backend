@@ -32,7 +32,6 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     await client.connect();
-
     //add user ot db
     app.post('/register', async (req, res) => {
       const customerProfile = await client.db("dev-campus").collection("customer-profile");
@@ -54,13 +53,23 @@ async function run() {
 
     //get compnay details
     app.get('/get-company-list', async (req, res) => {
+      console.log(req.body)
       let query = {};
       const cursor = companyList.find(query);
       const COMPANYlist = await cursor.toArray();
-      console.log(COMPANYlist)
+      // console.log(COMPANYlist)
       res.send(COMPANYlist);
     })
 
+    app.get('/get-admin-profile', async (req, res) => {
+      console.log("profile accress request ", req.query);
+      const customerProfile = await client.db("dev-campus").collection("customer-profile");
+      const cursor = customerProfile.find(req.query);
+      const AdminProfile = await cursor.toArray();
+      console.log(AdminProfile)
+      res.send(AdminProfile);
+    })
+    
     //update company from bd
     app.put('/update-company-details', async (req, res) => {
       const email = req.body.email;
@@ -68,7 +77,7 @@ async function run() {
       console.log(email)
       console.log(updatedDocument)
       try {
-        const result = await companyList.updateOne({ email:email }, { $set: updatedDocument });
+        const result = await companyList.updateOne({ email: email }, { $set: updatedDocument });
         res.json(result);
       } catch (error) {
         console.error("Error updating document:", error);
@@ -80,7 +89,7 @@ async function run() {
     app.delete("/delete-company", async (req, res) => {
       const email = req.body.email;
       try {
-        const result = await companyList.deleteOne({ email:email });
+        const result = await companyList.deleteOne({ email: email });
         res.json(result);
       } catch (error) {
         console.error("Error deleting document:", error);
