@@ -35,9 +35,7 @@ async function run() {
     //add user ot db
     app.post('/register', async (req, res) => {
       const customerProfile = await client.db("dev-campus").collection("customer-profile");
-      console.log("register is called")
       const user = req.body;
-      console.log("requested to insert= \n", user);
       const result = await customerProfile.insertOne(user);
       res.send(result)
     })
