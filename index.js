@@ -59,6 +59,24 @@ async function run() {
       res.send(COMPANYlist);
     })
 
+    //add product
+    app.post('/add-product', async (req, res) => {
+      const ProductList = await client.db("dev-campus").collection("Product-list");
+      const user = req.body;
+      const result = await ProductList.insertOne(user);
+      res.send(result)
+    })
+
+    //get product
+    app.get('/get-get-product', async (req, res) => {
+      console.log(req.body)
+      let query = {};
+      const cursor = companyList.find(query);
+      const COMPANYlist = await cursor.toArray();
+      // console.log(COMPANYlist)
+      res.send(COMPANYlist);
+    })
+
     app.get('/get-admin-profile', async (req, res) => {
       console.log("profile accress request ", req.query);
       const customerProfile = await client.db("dev-campus").collection("customer-profile");
