@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const app = express();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion,ObjectId  } = require('mongodb');
 // const bodyParser = require('body-parser');
 const port = 5000;
 
@@ -49,7 +49,7 @@ async function run() {
     })
 
 
-    //get compnay details
+    //get compnay List
     app.get('/get-company-list', async (req, res) => {
       console.log(req.body)
       let query = {};
@@ -57,6 +57,28 @@ async function run() {
       const COMPANYlist = await cursor.toArray();
       // console.log(COMPANYlist)
       res.send(COMPANYlist);
+    })
+
+    //get specific compnay details
+    app.get('/get-one-company-details', async (req, res) => {
+      let query = req.query;
+      const cursor = companyList.find(query);
+      const CompanyDetails = await cursor.toArray();
+      // console.log(CompanyDetails)
+      res.send(CompanyDetails);
+    })
+
+
+    //get user
+    app.get('/get-user-list', async (req, res) => {
+      console.log(req.body)
+      const customerProfile = await client.db("dev-campus").collection("customer-profile");
+      let query = {};
+      const cursor = customerProfile.find(query);
+      const CustomerList = await cursor.toArray();
+      const filetered = CustomerList.filter(item => item.admin === 'false')
+      //we are sending users who are not admin
+      res.send(filetered);
     })
 
     //add product
@@ -68,13 +90,18 @@ async function run() {
     })
 
     //get product
-    app.get('/get-get-product', async (req, res) => {
-      console.log(req.body)
-      let query = {};
-      const cursor = companyList.find(query);
-      const COMPANYlist = await cursor.toArray();
-      // console.log(COMPANYlist)
-      res.send(COMPANYlist);
+    app.get('/get-product-list', async (req, res) => {
+      const ProductList = await client.db("dev-campus").collection("Product-list");
+      let query = req.query;
+      // console.log(query.productName.toLowerCase())
+      const cursor = ProductList.find({});
+      const Products = await cursor.toArray();
+      //filtering accordin to search
+      const FilteredProduct = Products.filter(product =>
+        product.productName.toLowerCase() == query.productName.toLowerCase()
+      )
+      //console.log(FilteredProduct)
+      res.send(FilteredProduct);
     })
 
     app.get('/get-admin-profile', async (req, res) => {
@@ -85,7 +112,7 @@ async function run() {
       console.log(AdminProfile)
       res.send(AdminProfile);
     })
-    
+
     //update company from bd
     app.put('/update-company-details', async (req, res) => {
       const email = req.body.email;
@@ -109,6 +136,54 @@ async function run() {
         res.json(result);
       } catch (error) {
         console.error("Error deleting document:", error);
+        res.status(500).send("Internal Server Error");
+      }
+    })
+
+    //set order
+    app.post('/place-order', async (req, res) => {
+      const OrderList = await client.db("dev-campus").collection("OrderList");
+      const order = req.body;
+      order.approval='false'
+      order.status='Incomplete'
+      const result = await OrderList.insertOne(order)
+      res.send(result)
+    })
+
+    //get orders for user
+    app.get('/get-user-oder-list', async (req, res) => {
+      const OrderList = await client.db("dev-campus").collection("OrderList");
+      let query = req.query;
+      // console.log(query.productName.toLowerCase())
+      const cursor = OrderList.find(query);
+      const Orders = await cursor.toArray();
+      console.log(Orders)
+      res.send(Orders);
+    })
+    //get orders for user
+    app.get('/get-admin-oder-list', async (req, res) => {
+      const OrderList = await client.db("dev-campus").collection("OrderList");
+      let query = req.query;
+      // console.log(query.productName.toLowerCase())
+      const cursor = OrderList.find({});
+      const Orders = await cursor.toArray();
+      // console.log(Orders)
+      res.send(Orders);
+    })
+
+    //update Orders
+    app.put('/update-order-approval', async (req, res) => {
+      const OrderList = await client.db("dev-campus").collection("OrderList");
+      const id = req.body._id;
+      const objectId = new ObjectId(id);
+      const updatedDocument = req.body;
+      console.log(updatedDocument)
+      const ap={approval:'true'}
+      try {
+        const result = await OrderList.updateOne({ _id: objectId }, { $set: ap });
+        res.json(result);
+      } catch (error) {
+        console.error("Error updating document:", error);
         res.status(500).send("Internal Server Error");
       }
     })
