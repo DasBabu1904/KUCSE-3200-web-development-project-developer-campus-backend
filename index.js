@@ -59,7 +59,7 @@ async function run() {
 
     //get compnay List
     app.get('/get-company-list', async (req, res) => {
-      console.log(req.body)
+      // console.log(req.body)
       let query = {};
       const cursor = companyList.find(query);
       const COMPANYlist = await cursor.toArray();
@@ -79,7 +79,7 @@ async function run() {
 
     //get user
     app.get('/get-user-list', async (req, res) => {
-      console.log(req.body)
+      // console.log(req.body)
       const customerProfile = await client.db("dev-campus").collection("customer-profile");
       let query = {};
       const cursor = customerProfile.find(query);
@@ -117,7 +117,7 @@ async function run() {
       const customerProfile = await client.db("dev-campus").collection("customer-profile");
       const cursor = customerProfile.find(req.query);
       const AdminProfile = await cursor.toArray();
-      console.log(AdminProfile)
+      // console.log(AdminProfile)
       res.send(AdminProfile);
     })
 
@@ -185,7 +185,7 @@ async function run() {
       const id = req.body._id;
       const objectId = new ObjectId(id);
       const updatedDocument = req.body;
-      console.log(updatedDocument)
+      // console.log(updatedDocument)
       const ap = { approval: 'true' }
       try {
         const result = await OrderList.updateOne({ _id: objectId }, { $set: ap });
@@ -198,12 +198,18 @@ async function run() {
 
     //----------------------------------------------------------------//
     //----------payment system---------------------------------------//
-    app.post('/poreced-payment', async(req, res) => {
+    app.post('/poreced-payment', async (req, res) => {
       const PaymedCollection = await client.db("dev-campus").collection("Payments");
-      const query=(req.query)
+      const query = (req.query.id)
+      const OrderList = await client.db("dev-campus").collection("OrderList");
+      const cursor = OrderList.find({ _id: new ObjectId(query) });
+      const Orders = await cursor.toArray();
+      const order = Orders[0]
+      console.log(order)
       const transactionID = new ObjectId().toString();
+
       const data = {
-        total_amount: query.price,
+        total_amount: 100,
         currency: 'BDT',
         tran_id: transactionID, // use unique tran_id for each api call
         success_url: `http://localhost:5000/success-payment?transactionID=${transactionID}`,
@@ -215,27 +221,39 @@ async function run() {
         product_category: 'Electronic',
         product_profile: 'general',
         cus_name: 'Customer Name',
-        cus_email: query.companyEmail,
-        customerEmail:query.customerEmail
+        cus_email: 'customer@example.com',
+        cus_add1: 'Dhaka',
+        cus_add2: 'Dhaka',
+        cus_city: 'Dhaka',
+        cus_state: 'Dhaka',
+        cus_postcode: '1000',
+        cus_country: 'Bangladesh',
+        cus_phone: '01711111111',
+        cus_fax: '01711111111',
+        ship_name: 'Customer Name',
+        ship_add1: 'Dhaka',
+        ship_add2: 'Dhaka',
+        ship_city: 'Dhaka',
+        ship_state: 'Dhaka',
+        ship_postcode: 1000,
+        ship_country: 'Bangladesh',
       };
       const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live)
       sslcz.init(data).then(apiResponse => {
         // Redirect the user to payment gateway
-        let GatewayPageURL = apiResponse.GatewayPageURL
-        res.setHeader('Access-Control-Allow-Origin', '*');
-        res.setHeader('Access-Control-Allow-Credentials', 'true');
-        res.setHeader('Access-Control-Expose-Headers', '');
-        res.send({url:GatewayPageURL})
-        console.log('Redirecting to: ', GatewayPageURL)
-        PaymedCollection.insertOne(data)
-        // console.log('Redirecting to: ', GatewayPageURL)
+        const GatewayPageURL = apiResponse.GatewayPageURL
+        res.send({ url: GatewayPageURL })
+        // PaymedCollection.insertOne(data)
       });
     })
-    app.post('/success-payment',(req,res)=>{
-      // console.log(req.query)
-      // query.success='True'
-      // res.redirect(`localhost:3000/payment/success?${query}`)
+
+
+    app.post('/success-payment', (req, res) => {
+      console.log("hit in suc",)
+      res.redirect(`http://localhost:3000/payment/success?transactionID=${req.query}`)
     })
+
+
   } finally {
     //  jodi connencted rakhte chai taile close kora jabe na
     //  onek bishal error khaisi eitar karone. 
