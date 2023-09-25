@@ -113,7 +113,7 @@ async function run() {
     })
 
     app.get('/get-admin-profile', async (req, res) => {
-      console.log("profile accress request ", req.query);
+      // console.log("profile accress request ", req.query);
       const customerProfile = await client.db("dev-campus").collection("customer-profile");
       const cursor = customerProfile.find(req.query);
       const AdminProfile = await cursor.toArray();
@@ -201,13 +201,13 @@ async function run() {
     app.post('/poreced-payment', async (req, res) => {
       const PaymedCollection = await client.db("dev-campus").collection("Payments");
       const query = (req.query.id)
+      // console.log(query)
       const OrderList = await client.db("dev-campus").collection("OrderList");
-      const cursor = OrderList.find({ _id: new ObjectId(query) });
-      const Orders = await cursor.toArray();
-      const order = Orders[0]
-      console.log(order)
+      const order = await OrderList.findOne({ _id: new ObjectId(query) });
+      // console.log(order._id)
+     
       const transactionID = new ObjectId().toString();
-
+      
       const data = {
         total_amount: 100,
         currency: 'BDT',
@@ -243,14 +243,19 @@ async function run() {
         // Redirect the user to payment gateway
         const GatewayPageURL = apiResponse.GatewayPageURL
         res.send({ url: GatewayPageURL })
-        // PaymedCollection.insertOne(data)
+        PaymedCollection.insertOne(data)
+
+        const objectId = new ObjectId(query);
+        const ap = { payment: 'true' }
+        OrderList.updateOne({ _id: objectId }, { $set: ap });
+        
       });
     })
 
 
     app.post('/success-payment', (req, res) => {
-      console.log("hit in suc",)
-      res.redirect(`http://localhost:3000/payment/success?transactionID=${req.query}`)
+      // console.log("hit in suc",)
+      res.redirect(`http://localhost:3000/payment/success?transactionID=${req.query.transactionID}`)
     })
 
 
