@@ -25,7 +25,6 @@ pYjFYAC6fBzXZYej
  * 
  */
 
-
 const uri = "mongodb+srv://sourav200217:suvro12345678@cluster0.0omak70.mongodb.net/?retryWrites=true&w=majority";
 
 
@@ -195,6 +194,22 @@ async function run() {
         res.status(500).send("Internal Server Error");
       }
     })
+    //update Orders status
+    app.put('/update-order-status', async (req, res) => {
+      const OrderList = await client.db("dev-campus").collection("OrderList");
+      const id = req.body._id;
+      const objectId = new ObjectId(id);
+      const updatedDocument = req.body;
+      // console.log(updatedDocument)
+      const ap = { status: 'complete' }
+      try {
+        const result = await OrderList.updateOne({ _id: objectId }, { $set: ap });
+        res.json(result);
+      } catch (error) {
+        console.error("Error updating document:", error);
+        res.status(500).send("Internal Server Error");
+      }
+    })
 
     //----------------------------------------------------------------//
     //----------payment system---------------------------------------//
@@ -204,24 +219,24 @@ async function run() {
       // console.log(query)
       const OrderList = await client.db("dev-campus").collection("OrderList");
       const order = await OrderList.findOne({ _id: new ObjectId(query) });
-      // console.log(order._id)
+      console.log(order)
      
       const transactionID = new ObjectId().toString();
       
       const data = {
-        total_amount: 100,
+        total_amount: order.price,
         currency: 'BDT',
         tran_id: transactionID, // use unique tran_id for each api call
         success_url: `http://localhost:5000/success-payment?transactionID=${transactionID}`,
         fail_url: `http://localhost:5000/fail?transactionID=${transactionID}`,
-        cancel_url: `http://localhost:5000/cancel`,
+        cancel_url: `http://localhost:5000/fail?transactionID=${transactionID}`,
         ipn_url: 'http://localhost:5000/ipn',
         shipping_method: 'Courier',
         product_name: 'Computer.',
         product_category: 'Electronic',
         product_profile: 'general',
         cus_name: 'Customer Name',
-        cus_email: 'customer@example.com',
+        cus_email: order.orderBy,
         cus_add1: 'Dhaka',
         cus_add2: 'Dhaka',
         cus_city: 'Dhaka',
@@ -250,14 +265,40 @@ async function run() {
         OrderList.updateOne({ _id: objectId }, { $set: ap });
         
       });
-    })
+    });
 
 
     app.post('/success-payment', (req, res) => {
       // console.log("hit in suc",)
       res.redirect(`http://localhost:3000/payment/success?transactionID=${req.query.transactionID}`)
-    })
+    });
 
+    //get payments of a spacific user
+    app.get('/payments-of-user',async (req,res)=>{
+      console.log("hit")
+      const query=req.query.customerEmail
+      console.log()
+      const PaymedCollection = await client.db("dev-campus").collection("Payments");
+      const cursor=await PaymedCollection.find({cus_email:query})
+      const paymentList=await cursor.toArray()
+      res.send(paymentList)
+    });
+
+    app.put('/update-user-profile', async (req, res) => {
+      // console.log("hit")
+      const email = req.body.email;
+      const updatedDocument = req.body;
+      const customerProfile = await client.db("dev-campus").collection("customer-profile");
+      console.log(email)
+      // console.log(updatedDocument)
+      try {
+        const result = await customerProfile.updateOne({ email: email }, { $set: updatedDocument });
+        res.json(result);
+      } catch (error) {
+        console.error("Error updating document:", error);
+        res.status(500).send("Internal Server Error");
+      }
+    })
 
   } finally {
     //  jodi connencted rakhte chai taile close kora jabe na
